@@ -21,14 +21,18 @@ class Embarcacao(ABC):
     PONTOS_PARCIALMENTE_ABATIDA = 3
     PONTOS_TOTALMENTE_ABATIDA = 5
 
-    def __init__(self, codigo: int, total_de_posicoes: int, posicao_inicial: str, orientacao: str, id_jogador: str):
+    def __init__(self, id_embarcacao: int, codigo: int, total_posicoes: int, linha_inicial: int,
+                 coluna_inicial: int, orientacao: str, id_jogador: str):
+        self.id_embarcacao = id_embarcacao
         self.codigo = codigo
-        self.total_de_posicoes = total_de_posicoes
-        self.linha_inicial = ManipuladorDeString.get_linha_correta(posicao_inicial)
-        self.coluna_inicial = ManipuladorDeString.get_coluna_correta(posicao_inicial)
+        self.total_de_posicoes = total_posicoes
+        self.linha_inicial = linha_inicial
+        self.coluna_inicial = coluna_inicial
         self.orientacao = orientacao
         self.id_jogador = id_jogador
-        self.foi_atingida = False
+
+    def get_id_embarcacao(self) -> int:
+        return self.id_embarcacao
 
     def get_codigo(self) -> int:
         return self.codigo
@@ -55,18 +59,10 @@ class Embarcacao(ABC):
 
         if self.total_de_posicoes > 1:
             self.total_de_posicoes -= 1
-            if self.foi_atingida:
-                return self.PONTOS_PARCIALMENTE_ABATIDA, False
-            else:
-                self.foi_atingida = True
-                return self.PONTOS_PARCIALMENTE_ABATIDA, True
+            return self.PONTOS_PARCIALMENTE_ABATIDA, self.get_id_embarcacao()
         elif self.total_de_posicoes == 1:
             self.total_de_posicoes -= 1
-            if self.foi_atingida:
-                return self.PONTOS_TOTALMENTE_ABATIDA, False
-            else:
-                self.foi_atingida = True
-                return self.PONTOS_TOTALMENTE_ABATIDA, True
+            return self.PONTOS_TOTALMENTE_ABATIDA, self.get_id_embarcacao()
         else:
             raise RuntimeError('A embarcação já foi destruida!')
 
@@ -80,34 +76,40 @@ class Embarcacao(ABC):
 class Submarino(Embarcacao):
     """ A representação de um Submarino no jogo. """
 
-    def __init__(self, posicao_inicial: str, id_jogador: str):
-        super().__init__(3, 1, posicao_inicial, 'H', id_jogador)
+    def __init__(self, id_embarcacao: int, linha_inicial: int, coluna_inicial: int, id_jogador: str):
+        super().__init__(id_embarcacao, 3, 1, linha_inicial, coluna_inicial, 'H', id_jogador)
 
 
 class Cruzador(Embarcacao):
     """  A representação de um Cruzador no jogo. """
 
-    def __init__(self, posicao_inicial: str, orientacao: str, id_jogador: str):
-        super().__init__(4, 2, posicao_inicial, orientacao, id_jogador)
+    def __init__(self, id_embarcacao: int, linha_inicial: int, coluna_inicial: int, orientacao: str, id_jogador: str):
+        super().__init__(id_embarcacao, 4, 2, linha_inicial, coluna_inicial, orientacao, id_jogador)
 
 
 class Encouracado(Embarcacao):
     """ A reresentação de um Encouraccado no jogo """
 
-    def __init__(self, posicao_inicial: str, orientacao: str, id_jogador: str):
-        super().__init__(1, 4, posicao_inicial, orientacao, id_jogador)
+    def __init__(self, id_embarcacao: int, linha_inicial: int, coluna_inicial: int, orientacao: str, id_jogador: str):
+        super().__init__(id_embarcacao, 1, 4, linha_inicial, coluna_inicial, orientacao, id_jogador)
 
 
 class PortaAvioes(Embarcacao):
     """ A representação de um Porta-aviões no jogo """
 
-    def __init__(self, posicao_inicial: str, orientacao: str, id_jogador: str):
-        super().__init__(2, 5, posicao_inicial, orientacao, id_jogador)
+    def __init__(self, id_embarcacao: int, linha_inicial: int, coluna_inicial: int, orientacao: str, id_jogador: str):
+        super().__init__(id_embarcacao, 2, 5, linha_inicial, coluna_inicial, orientacao, id_jogador)
 
 
 class EmbarcacaoFactory:
     """ Constroi instâncias de Embarcações de acordo com
      o tipo especificado. """
+
+    CODIGO_ENCOURACADO = '1'
+    CODIGO_PORTA_AVIOES = '2'
+    CODIGO_SUBMARINO = '3'
+    CODIGO_CRUZADOR = '4'
+    contador_id = 0
 
     @staticmethod
     def construir_a_partir_de(jogadas: dict, id_jogador: str) -> list:
@@ -115,15 +117,42 @@ class EmbarcacaoFactory:
         retornando uma lista das mesmas."""
 
         embarcacoes = []
-        for key, value in jogadas.items():
-            for emb_spec in value:
-                if key == '1':
-                    embarcacoes.append(Encouracado(emb_spec[:-1], emb_spec[-1], id_jogador))
-                elif key == '2':
-                    embarcacoes.append(PortaAvioes(emb_spec[:-1], emb_spec[-1], id_jogador))
-                elif key == '3':
-                    embarcacoes.append(Submarino(emb_spec, id_jogador))
+        for codigo_embarcacao, emb_specs in jogadas.items():
+            for emb_spec in emb_specs:
+                if codigo_embarcacao == EmbarcacaoFactory.CODIGO_ENCOURACADO:
+
+                    embarcacoes.append(Encouracado(EmbarcacaoFactory.get_proximo_id(),
+                                                   ManipuladorDeString.get_linha_correta(emb_spec[:-1]),
+                                                   ManipuladorDeString.get_coluna_correta(emb_spec[:-1]),
+                                                   emb_spec[-1], id_jogador))
+
+                elif codigo_embarcacao == EmbarcacaoFactory.CODIGO_PORTA_AVIOES:
+
+                    embarcacoes.append(PortaAvioes(EmbarcacaoFactory.get_proximo_id(),
+                                                   ManipuladorDeString.get_linha_correta(emb_spec[:-1]),
+                                                   ManipuladorDeString.get_coluna_correta(emb_spec[:-1]),
+                                                   emb_spec[-1], id_jogador))
+
+                elif codigo_embarcacao == EmbarcacaoFactory.CODIGO_SUBMARINO:
+
+                    embarcacoes.append(Submarino(EmbarcacaoFactory.get_proximo_id(),
+                                                 ManipuladorDeString.get_linha_correta(emb_spec),
+                                                 ManipuladorDeString.get_coluna_correta(emb_spec), id_jogador))
+
+                elif codigo_embarcacao == EmbarcacaoFactory.CODIGO_CRUZADOR:
+
+                    embarcacoes.append(Cruzador(EmbarcacaoFactory.get_proximo_id(),
+                                                ManipuladorDeString.get_linha_correta(emb_spec[:-1]),
+                                                ManipuladorDeString.get_coluna_correta(emb_spec[:-1]),
+                                                emb_spec[-1], id_jogador))
                 else:
-                    embarcacoes.append(Cruzador(emb_spec[:-1], emb_spec[-1], id_jogador))
+                    raise RuntimeError('Codigo informado na construção da embarcação é inválido!')
 
         return embarcacoes
+
+    @staticmethod
+    def get_proximo_id():
+        """ Retorna um numero de identificação unico. """
+
+        EmbarcacaoFactory.contador_id += 1
+        return EmbarcacaoFactory.contador_id

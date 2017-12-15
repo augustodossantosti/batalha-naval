@@ -1,4 +1,9 @@
 """
+Este módulo contém a definição da classe do jogo bem como
+de classes que são intimamente ligadas a sua execução.
+
+author: Augusto Santos
+version: 1.0
 
 """
 
@@ -72,25 +77,34 @@ class Tabuleiro:
 class ChavePlacar(Enum):
     """"""
 
-    PONTUACAO, ACERTOS, PECAS_PROPRIAS_TOTAIS = range(3)
+    PONTUACAO, ID_INIMIGOS_ATINGIDOS, PECAS_PROPRIAS_TOTAIS = range(3)
 
 
 class Placar:
     """ A representação do placar da partida. """
 
+    INDICE_PONTOS_OBTIDOS = 0
+    INDICE_ID_EMBARCACAO = 1
+
     def __init__(self):
 
-        self.pontuacao = {'J1': {ChavePlacar.PONTUACAO: 0, ChavePlacar.ACERTOS: 0,
+        self.pontuacao = {'J1': {ChavePlacar.PONTUACAO: 0, ChavePlacar.ID_INIMIGOS_ATINGIDOS: [],
                                  ChavePlacar.PECAS_PROPRIAS_TOTAIS: 13},
-                          'J2': {ChavePlacar.PONTUACAO: 0, ChavePlacar.ACERTOS: 0,
+                          'J2': {ChavePlacar.PONTUACAO: 0, ChavePlacar.ID_INIMIGOS_ATINGIDOS: [],
                                  ChavePlacar.PECAS_PROPRIAS_TOTAIS: 13}}
 
-    def adicionar_pontuacao(self, pontos: tuple, id_jogador: str):
+    def adicionar_pontuacao(self, emb_info: tuple, id_jogador: str):
+        """ Adiciona ao placar a pontuação obtida ao atingir um determinado alvo.
 
-        if pontos[1] is not False:
-            self.pontuacao[id_jogador][ChavePlacar.ACERTOS] += 1
+        :arg emb_info Uma tupla contendo os pontos resultantes do disparo
+        e o id da embarcacao atingida.
 
-        self.pontuacao[id_jogador][ChavePlacar.PONTUACAO] += pontos[0]
+        :arg id_jogador O id do jogador que realizou o disparo. """
+
+        if emb_info[self.INDICE_ID_EMBARCACAO] not in self.pontuacao[id_jogador][ChavePlacar.ID_INIMIGOS_ATINGIDOS]:
+            self.pontuacao[id_jogador][ChavePlacar.ID_INIMIGOS_ATINGIDOS].append(emb_info[self.INDICE_ID_EMBARCACAO])
+
+        self.pontuacao[id_jogador][ChavePlacar.PONTUACAO] += emb_info[self.INDICE_PONTOS_OBTIDOS]
 
     def get_codigo_vencedor(self) -> str:
 
@@ -101,14 +115,15 @@ class Placar:
 
         return self.pontuacao[id_jogador][ChavePlacar.PONTUACAO]
 
-    def get_total_de_acertos(self, id_jogador: str) -> int:
+    def get_total_acertos(self, id_jogador: str) -> int:
 
-        return self.pontuacao[id_jogador][ChavePlacar.ACERTOS]
+        return len(self.pontuacao[id_jogador][ChavePlacar.ID_INIMIGOS_ATINGIDOS])
 
     def get_total_alvos_nao_atingidos(self, id_jogador: str) -> int:
 
-        return self.pontuacao[self.get_jogador_adversario(id_jogador)][ChavePlacar.PECAS_PROPRIAS_TOTAIS] \
-               - self.pontuacao[id_jogador][ChavePlacar.ACERTOS]
+        id_adversario = self.get_jogador_adversario(id_jogador)
+
+        return self.pontuacao[id_adversario][ChavePlacar.PECAS_PROPRIAS_TOTAIS] - self.get_total_acertos(id_jogador)
 
     def get_jogador_adversario(self, id_jogador: str) -> str:
 
@@ -126,17 +141,17 @@ class Placar:
         if self.eh_um_empate():
 
             return '{} {}AA {}AE {}PT\n{} {}AA {}AE {}PT'.format('J1',
-                                                                 self.get_total_de_acertos('J1'),
+                                                                 self.get_total_acertos('J1'),
                                                                  self.get_total_alvos_nao_atingidos('J1'),
                                                                  self.get_pontuacao('J1'),
                                                                  'J2',
-                                                                 self.get_total_de_acertos('J2'),
+                                                                 self.get_total_acertos('J2'),
                                                                  self.get_total_alvos_nao_atingidos('J2'),
                                                                  self.get_pontuacao('J2'))
         else:
 
             codigo_vencedor = self.get_codigo_vencedor()
-            return '{} {}AA {}AE {}PT'.format(codigo_vencedor, self.get_total_de_acertos(codigo_vencedor),
+            return '{} {}AA {}AE {}PT'.format(codigo_vencedor, self.get_total_acertos(codigo_vencedor),
                                               self.get_total_alvos_nao_atingidos(codigo_vencedor),
                                               self.get_pontuacao(codigo_vencedor))
 

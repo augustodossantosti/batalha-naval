@@ -1,14 +1,8 @@
 """
+Jogo Batalha Naval
 
-EP final de Algoritmos
-
-Banco de dados - 1º semestre - Noite - 2017
-Professor: Lucas Nadalete
-
-Aluno: Francilei Augusto dos Santos
-
-Data: 12-11-17
-Versão: 1.0
+@authot: Augusto Santos
+@version: 1.0
 
 """
 

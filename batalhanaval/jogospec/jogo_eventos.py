@@ -1,5 +1,9 @@
 """
+Este módulo contém a definição das classes de definição dos
+listeners e eventos ocorridos na aplicação.
 
+author: Augusto Santos
+version: 1.0
 
 """
 
